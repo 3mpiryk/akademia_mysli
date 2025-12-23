@@ -4,6 +4,7 @@ import { AppProvider } from './context/AppContext';
 import { Navbar } from './components/Navbar';
 import { Chatbot } from './components/Chatbot';
 import { Home } from './pages/Home';
+import { Services } from './pages/Services';
 import { Login, Register } from './pages/Auth';
 import { Dashboard } from './pages/Dashboard';
 import { DoctorPanel } from './pages/DoctorPanel';
@@ -30,6 +31,7 @@ const App: React.FC = () => {
         <Layout>
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/services" element={<Services />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/dashboard" element={<Dashboard />} />

@@ -59,6 +59,12 @@ const MOCK_USERS: User[] = [
   { id: 'd2', email: 'terapeuta@test.pl', name: 'Mgr Piotr Zieliński', role: UserRole.DOCTOR, password: 'password', specialization: 'Psychoterapeuta' }
 ];
 
+interface PendingBookingData {
+  doctorId: string;
+  serviceId: string;
+  date: string;
+}
+
 interface AppContextType {
   user: User | null;
   login: (email: string, pass: string) => boolean;
@@ -68,10 +74,12 @@ interface AppContextType {
   appointments: Appointment[];
   bills: Bill[];
   prescriptions: Prescription[];
-  bookAppointment: (doctorId: string, serviceId: string, date: string) => void;
+  bookAppointment: (doctorId: string, serviceId: string, date: string, patientId?: string) => void;
   doctors: User[];
   createBill: (apptId: string, amount: number) => void;
   getDoctorStats: (doctorId: string) => any;
+  setPendingBooking: (data: PendingBookingData | null) => void;
+  pendingBooking: PendingBookingData | null;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -81,6 +89,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [pendingBooking, setPendingBooking] = useState<PendingBookingData | null>(null);
 
   // Seed initial data simulation
   useEffect(() => {
@@ -97,10 +106,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ]);
   }, []);
 
+  const bookAppointment = (doctorId: string, serviceId: string, date: string, patientId?: string) => {
+    const pId = patientId || user?.id;
+    if (!pId) return;
+
+    const newAppt: Appointment = {
+      id: `a${Math.random().toString(36).substr(2, 9)}`,
+      patientId: pId,
+      doctorId,
+      serviceId,
+      date,
+      status: AppointmentStatus.SCHEDULED
+    };
+    setAppointments(prev => [...prev, newAppt]);
+  };
+
   const login = (email: string, pass: string) => {
     const found = MOCK_USERS.find(u => u.email === email && u.password === pass);
     if (found) {
       setUser(found);
+      
+      // AUTO-BOOKING LOGIC
+      if (pendingBooking) {
+        bookAppointment(pendingBooking.doctorId, pendingBooking.serviceId, pendingBooking.date, found.id);
+        setPendingBooking(null);
+      }
       return true;
     }
     return false;
@@ -117,22 +147,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       password: pass,
       role: UserRole.PATIENT
     };
-    // Note: This updates local state but won't persist across refresh in this mock
-    // For a real demo feel, we'd append to MOCK_USERS if it were mutable, but let's just log in the new user
     setUser(newUser);
-  };
 
-  const bookAppointment = (doctorId: string, serviceId: string, date: string) => {
-    if (!user) return;
-    const newAppt: Appointment = {
-      id: `a${Math.random().toString(36).substr(2, 9)}`,
-      patientId: user.id,
-      doctorId,
-      serviceId,
-      date,
-      status: AppointmentStatus.SCHEDULED
-    };
-    setAppointments(prev => [...prev, newAppt]);
+    // AUTO-BOOKING LOGIC
+    if (pendingBooking) {
+      bookAppointment(pendingBooking.doctorId, pendingBooking.serviceId, pendingBooking.date, newUser.id);
+      setPendingBooking(null);
+    }
   };
 
   const createBill = (apptId: string, amount: number) => {
@@ -171,7 +192,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       bookAppointment,
       doctors,
       createBill,
-      getDoctorStats
+      getDoctorStats,
+      setPendingBooking,
+      pendingBooking
     }}>
       {children}
     </AppContext.Provider>

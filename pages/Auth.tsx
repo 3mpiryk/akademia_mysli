@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { Mail, Lock, User as UserIcon, ArrowRight } from 'lucide-react';
 
 export const Login: React.FC = () => {
-  const { login } = useApp();
+  const { login, pendingBooking } = useApp();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -12,60 +13,100 @@ export const Login: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (login(email, password)) {
+      if (pendingBooking) {
+        alert("Pomyślnie zalogowano. Twoja wizyta została automatycznie potwierdzona!");
+      }
       navigate('/dashboard');
     } else {
-      setError('Nieprawidłowy email lub hasło. (Spróbuj: pacjent@test.pl / password)');
+      setError('Nieprawidłowy email lub hasło.');
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Zaloguj się</h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Dostęp do historii leczenia i recept
-          </p>
+      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
+        <div className="text-center">
+          <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">Witaj ponownie</h2>
+          {pendingBooking ? (
+             <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+               <p className="font-bold mb-1">Dokończ rezerwację</p>
+               Zaloguj się, aby potwierdzić wizytę na dzień <strong>{new Date(pendingBooking.date).toLocaleDateString()}</strong>.
+             </div>
+          ) : (
+             <p className="mt-2 text-sm text-gray-500">
+               Zaloguj się do swojego konta pacjenta
+             </p>
+          )}
         </div>
+        
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="space-y-4">
             <div>
-              <input
-                type="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Adres email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Adres email</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail size={18} className="text-gray-400" />
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  className="appearance-none block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm bg-white text-gray-900 transition-all"
+                  placeholder="np. jan@kowalski.pl"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
             </div>
+            
             <div>
-              <input
-                type="password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Hasło"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Hasło</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock size={18} className="text-gray-400" />
+                </div>
+                <input
+                  id="password"
+                  type="password"
+                  required
+                  className="appearance-none block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm bg-white text-gray-900 transition-all"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
             </div>
           </div>
 
-          {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg p-3 text-center">
+              {error}
+            </div>
+          )}
 
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors shadow-lg hover:shadow-xl"
             >
-              Zaloguj się
+              {pendingBooking ? 'Zaloguj i rezerwuj' : 'Zaloguj się'}
             </button>
           </div>
+          
+          <div className="text-center text-sm">
+             <span className="text-gray-500">Nie masz konta? </span>
+             <Link to="/register" className="font-bold text-primary-600 hover:text-primary-500">
+               Zarejestruj się
+             </Link>
+          </div>
         </form>
-        <div className="text-center">
-             <p className="text-xs text-gray-400">Demo konta:</p>
-             <p className="text-xs text-gray-400">Pacjent: pacjent@test.pl / password</p>
-             <p className="text-xs text-gray-400">Lekarz: doktor@test.pl / password</p>
+
+        <div className="mt-6 pt-6 border-t border-gray-100">
+             <p className="text-xs text-center text-gray-400 uppercase tracking-wider font-semibold mb-3">Dane testowe</p>
+             <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-500 space-y-1 text-center">
+                <p>Pacjent: <span className="font-mono text-gray-700">pacjent@test.pl</span> / <span className="font-mono text-gray-700">password</span></p>
+                <p>Lekarz: <span className="font-mono text-gray-700">doktor@test.pl</span> / <span className="font-mono text-gray-700">password</span></p>
+             </div>
         </div>
       </div>
     </div>
@@ -73,7 +114,7 @@ export const Login: React.FC = () => {
 };
 
 export const Register: React.FC = () => {
-  const { register } = useApp();
+  const { register, pendingBooking } = useApp();
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -82,56 +123,96 @@ export const Register: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     register(name, email, password);
-    navigate('/dashboard'); // Auto login simulation
+    if (pendingBooking) {
+        alert("Konto utworzone. Twoja wizyta została automatycznie potwierdzona!");
+    }
+    navigate('/dashboard'); 
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Załóż konto</h2>
+      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
+        <div className="text-center">
+          <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">Dołącz do nas</h2>
+          {pendingBooking && (
+             <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
+               <p className="font-bold mb-1">Ostatni krok!</p>
+               Utwórz konto, aby potwierdzić wizytę na dzień <strong>{new Date(pendingBooking.date).toLocaleDateString()}</strong>.
+             </div>
+          )}
         </div>
+        
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="space-y-4">
             <div>
-              <input
-                type="text"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Imię i Nazwisko"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Imię i Nazwisko</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <UserIcon size={18} className="text-gray-400" />
+                </div>
+                <input
+                  id="name"
+                  type="text"
+                  required
+                  className="appearance-none block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm bg-white text-gray-900 transition-all"
+                  placeholder="Jan Kowalski"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
             </div>
+
             <div>
-              <input
-                type="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Adres email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Adres email</label>
+              <div className="relative">
+                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail size={18} className="text-gray-400" />
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  className="appearance-none block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm bg-white text-gray-900 transition-all"
+                  placeholder="jan@kowalski.pl"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
             </div>
+
             <div>
-              <input
-                type="password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Hasło"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Hasło</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock size={18} className="text-gray-400" />
+                </div>
+                <input
+                  id="password"
+                  type="password"
+                  required
+                  className="appearance-none block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm bg-white text-gray-900 transition-all"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
             </div>
           </div>
 
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors shadow-lg hover:shadow-xl"
             >
-              Zarejestruj się
+              {pendingBooking ? 'Zarejestruj i potwierdź wizytę' : 'Zarejestruj się'} <ArrowRight className="ml-2" size={20} />
             </button>
+          </div>
+          
+          <div className="text-center text-sm">
+             <span className="text-gray-500">Masz już konto? </span>
+             <Link to="/login" className="font-bold text-primary-600 hover:text-primary-500">
+               Zaloguj się
+             </Link>
           </div>
         </form>
       </div>

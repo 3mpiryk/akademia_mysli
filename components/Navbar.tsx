@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { UserRole } from '../types';
 import { Stethoscope, LogOut, User, Menu, X } from 'lucide-react';
@@ -7,12 +7,15 @@ import { Stethoscope, LogOut, User, Menu, X } from 'lucide-react';
 export const Navbar: React.FC = () => {
   const { user, logout } = useApp();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isOpen, setIsOpen] = React.useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
+
+  const isActive = (path: string) => location.pathname === path ? 'text-primary-600 bg-primary-50' : 'text-gray-600 hover:text-primary-600';
 
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
@@ -28,13 +31,13 @@ export const Navbar: React.FC = () => {
           </div>
           
           <div className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">Strona główna</Link>
-            <Link to="/#services" className="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">Usługi</Link>
+            <Link to="/" className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/')}`}>Strona główna</Link>
+            <Link to="/services" className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/services')}`}>Usługi i Cennik</Link>
             
             {user ? (
               <>
                 {user.role === UserRole.PATIENT && (
-                  <Link to="/dashboard" className="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">Panel Pacjenta</Link>
+                  <Link to="/dashboard" className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/dashboard')}`}>Panel Pacjenta</Link>
                 )}
                 {user.role === UserRole.DOCTOR && (
                   <Link to="/doctor-panel" className="text-red-600 hover:text-red-800 px-3 py-2 rounded-md text-sm font-medium font-bold">Centrum Lekarza</Link>
@@ -67,6 +70,7 @@ export const Navbar: React.FC = () => {
         <div className="md:hidden bg-white border-t">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             <Link to="/" className="block text-gray-700 hover:bg-gray-100 px-3 py-2 rounded-md text-base font-medium">Strona główna</Link>
+            <Link to="/services" className="block text-gray-700 hover:bg-gray-100 px-3 py-2 rounded-md text-base font-medium">Usługi i Cennik</Link>
             {user ? (
                <>
                  <Link to={user.role === UserRole.DOCTOR ? "/doctor-panel" : "/dashboard"} className="block text-gray-700 hover:bg-gray-100 px-3 py-2 rounded-md text-base font-medium">
