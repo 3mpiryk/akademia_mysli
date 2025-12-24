@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { UserRole } from '../types';
 import { Check, User as UserIcon, Calendar, ArrowRight, LogIn, UserPlus, X } from 'lucide-react';
 
@@ -14,6 +14,11 @@ export const Booking: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  if (user && user.role !== UserRole.PATIENT) {
+    const redirectPath = user.role === UserRole.DOCTOR ? '/akademia-mysli-panel-lekarza' : '/';
+    return <Navigate to={redirectPath} replace />;
+  }
 
   // Generate some slots for the next 7 days
   const generateSlots = (doctorId: string) => {

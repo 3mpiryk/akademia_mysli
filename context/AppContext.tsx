@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, Appointment, Service, Bill, Prescription, UserRole, AppointmentStatus } from '../types';
+import React, { createContext, useContext, useMemo, useSyncExternalStore } from 'react';
+import { AppointmentStatus, type Appointment, type Bill, type Prescription, type Service, type User, UserRole } from '../types';
+import { AppStore, type DoctorStatsItem, type PendingBookingData, type SeedData } from '../core/AppStore';
 
 // --- MOCK DATA ---
 const MOCK_SERVICES: Service[] = [
@@ -59,15 +60,9 @@ const MOCK_USERS: User[] = [
   { id: 'd2', email: 'terapeuta@test.pl', name: 'Mgr Piotr Zieliński', role: UserRole.DOCTOR, password: 'password', specialization: 'Psychoterapeuta' }
 ];
 
-interface PendingBookingData {
-  doctorId: string;
-  serviceId: string;
-  date: string;
-}
-
 interface AppContextType {
   user: User | null;
-  login: (email: string, pass: string) => boolean;
+  login: (email: string, pass: string) => User | null;
   logout: () => void;
   register: (name: string, email: string, pass: string) => void;
   services: Service[];
@@ -77,125 +72,48 @@ interface AppContextType {
   bookAppointment: (doctorId: string, serviceId: string, date: string, patientId?: string) => void;
   doctors: User[];
   createBill: (apptId: string, amount: number) => void;
-  getDoctorStats: (doctorId: string) => any;
+  getDoctorStats: (doctorId: string) => DoctorStatsItem[];
   setPendingBooking: (data: PendingBookingData | null) => void;
   pendingBooking: PendingBookingData | null;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const createSeedData = (): SeedData => ({
+  appointments: [
+    { id: 'a1', patientId: 'p1', doctorId: 'd1', serviceId: 's1', date: new Date(Date.now() - 86400000).toISOString(), status: AppointmentStatus.COMPLETED },
+    { id: 'a2', patientId: 'p1', doctorId: 'd2', serviceId: 's2', date: new Date(Date.now() + 86400000).toISOString(), status: AppointmentStatus.SCHEDULED }
+  ],
+  bills: [
+    { id: 'b1', appointmentId: 'a1', patientId: 'p1', amount: 250, isPaid: false, issuedDate: new Date().toISOString() }
+  ],
+  prescriptions: [
+    { id: 'rx1', patientId: 'p1', doctorId: 'd1', medications: ['Hydroksyzyna 10mg'], code: '4455', issuedDate: new Date().toISOString(), expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() }
+  ]
+});
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [bills, setBills] = useState<Bill[]>([]);
-  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
-  const [pendingBooking, setPendingBooking] = useState<PendingBookingData | null>(null);
+  const store = useMemo(() => new AppStore({
+    users: MOCK_USERS,
+    services: MOCK_SERVICES,
+    seed: createSeedData()
+  }), []);
 
-  // Seed initial data simulation
-  useEffect(() => {
-    // Fake some past data
-    setAppointments([
-      { id: 'a1', patientId: 'p1', doctorId: 'd1', serviceId: 's1', date: new Date(Date.now() - 86400000).toISOString(), status: AppointmentStatus.COMPLETED },
-      { id: 'a2', patientId: 'p1', doctorId: 'd2', serviceId: 's2', date: new Date(Date.now() + 86400000).toISOString(), status: AppointmentStatus.SCHEDULED }
-    ]);
-    setBills([
-      { id: 'b1', appointmentId: 'a1', patientId: 'p1', amount: 250, isPaid: false, issuedDate: new Date().toISOString() }
-    ]);
-    setPrescriptions([
-        { id: 'rx1', patientId: 'p1', doctorId: 'd1', medications: ['Hydroksyzyna 10mg'], code: '4455', issuedDate: new Date().toISOString(), expiryDate: new Date(Date.now() + 30*24*60*60*1000).toISOString() }
-    ]);
-  }, []);
+  const state = useSyncExternalStore(store.subscribe, store.getState, store.getState);
 
-  const bookAppointment = (doctorId: string, serviceId: string, date: string, patientId?: string) => {
-    const pId = patientId || user?.id;
-    if (!pId) return;
-
-    const newAppt: Appointment = {
-      id: `a${Math.random().toString(36).substr(2, 9)}`,
-      patientId: pId,
-      doctorId,
-      serviceId,
-      date,
-      status: AppointmentStatus.SCHEDULED
-    };
-    setAppointments(prev => [...prev, newAppt]);
-  };
-
-  const login = (email: string, pass: string) => {
-    const found = MOCK_USERS.find(u => u.email === email && u.password === pass);
-    if (found) {
-      setUser(found);
-      
-      // AUTO-BOOKING LOGIC
-      if (pendingBooking) {
-        bookAppointment(pendingBooking.doctorId, pendingBooking.serviceId, pendingBooking.date, found.id);
-        setPendingBooking(null);
-      }
-      return true;
-    }
-    return false;
-  };
-
-  const logout = () => setUser(null);
-
-  const register = (name: string, email: string, pass: string) => {
-    // In a real app, check for email duplicates
-    const newUser: User = {
-      id: `p${Math.random().toString(36).substr(2, 9)}`,
-      name,
-      email,
-      password: pass,
-      role: UserRole.PATIENT
-    };
-    setUser(newUser);
-
-    // AUTO-BOOKING LOGIC
-    if (pendingBooking) {
-      bookAppointment(pendingBooking.doctorId, pendingBooking.serviceId, pendingBooking.date, newUser.id);
-      setPendingBooking(null);
-    }
-  };
-
-  const createBill = (apptId: string, amount: number) => {
-    const appt = appointments.find(a => a.id === apptId);
-    if (!appt) return;
-    const newBill: Bill = {
-        id: `b${Math.random().toString(36).substr(2, 9)}`,
-        appointmentId: apptId,
-        patientId: appt.patientId,
-        amount,
-        isPaid: false,
-        issuedDate: new Date().toISOString()
-    };
-    setBills(prev => [...prev, newBill]);
-  };
-
-  const getDoctorStats = (doctorId: string) => {
-    const doctorAppts = appointments.filter(a => a.doctorId === doctorId);
-    const completed = doctorAppts.filter(a => a.status === AppointmentStatus.COMPLETED).length;
-    const scheduled = doctorAppts.filter(a => a.status === AppointmentStatus.SCHEDULED).length;
-    return [
-        { name: 'Zakończone', value: completed },
-        { name: 'Zaplanowane', value: scheduled },
-    ];
-  };
-
-  const doctors = MOCK_USERS.filter(u => u.role === UserRole.DOCTOR);
+  const contextValue = useMemo<AppContextType>(() => ({
+    ...state,
+    login: store.login,
+    logout: store.logout,
+    register: store.register,
+    bookAppointment: store.bookAppointment,
+    createBill: store.createBill,
+    getDoctorStats: store.getDoctorStats,
+    setPendingBooking: store.setPendingBooking,
+  }), [state, store]);
 
   return (
-    <AppContext.Provider value={{
-      user, login, logout, register,
-      services: MOCK_SERVICES,
-      appointments,
-      bills,
-      prescriptions,
-      bookAppointment,
-      doctors,
-      createBill,
-      getDoctorStats,
-      setPendingBooking,
-      pendingBooking
-    }}>
+    <AppContext.Provider value={contextValue}>
       {children}
     </AppContext.Provider>
   );

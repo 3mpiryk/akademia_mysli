@@ -1,22 +1,44 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { UserRole } from '../types';
 import { Mail, Lock, User as UserIcon, ArrowRight } from 'lucide-react';
 
+const getDefaultRoute = (role: UserRole) => {
+  if (role === UserRole.PATIENT) return '/dashboard';
+  return '/akademia-mysli-panel-lekarza';
+};
+
+type RegisterResponse = {
+  access_token: string;
+  token_type: string;
+};
+
+const getApiBase = () => (
+  import.meta.env.VITE_API_BASE_URL ||
+  localStorage.getItem('am_api_base') ||
+  'http://localhost:8001'
+);
+
 export const Login: React.FC = () => {
-  const { login, pendingBooking } = useApp();
+  const { login, pendingBooking, user } = useApp();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
+  if (user) {
+    return <Navigate to={getDefaultRoute(user.role)} replace />;
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(email, password)) {
+    const authedUser = login(email, password);
+    if (authedUser) {
       if (pendingBooking) {
         alert("Pomyślnie zalogowano. Twoja wizyta została automatycznie potwierdzona!");
       }
-      navigate('/dashboard');
+      navigate(getDefaultRoute(authedUser.role));
     } else {
       setError('Nieprawidłowy email lub hasło.');
     }
@@ -105,7 +127,6 @@ export const Login: React.FC = () => {
              <p className="text-xs text-center text-gray-400 uppercase tracking-wider font-semibold mb-3">Dane testowe</p>
              <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-500 space-y-1 text-center">
                 <p>Pacjent: <span className="font-mono text-gray-700">pacjent@test.pl</span> / <span className="font-mono text-gray-700">password</span></p>
-                <p>Lekarz: <span className="font-mono text-gray-700">doktor@test.pl</span> / <span className="font-mono text-gray-700">password</span></p>
              </div>
         </div>
       </div>
@@ -114,19 +135,49 @@ export const Login: React.FC = () => {
 };
 
 export const Register: React.FC = () => {
-  const { register, pendingBooking } = useApp();
+  const { pendingBooking, user } = useApp();
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  if (user) {
+    return <Navigate to={getDefaultRoute(user.role)} replace />;
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    register(name, email, password);
-    if (pendingBooking) {
-        alert("Konto utworzone. Twoja wizyta została automatycznie potwierdzona!");
+    setError('');
+    setLoading(true);
+    try {
+      const response = await fetch(`${getApiBase()}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          full_name: name.trim(),
+        }),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.detail || 'Nie udało się utworzyć konta.');
+      }
+      const data: RegisterResponse = await response.json();
+      localStorage.setItem('am_patient_token', data.access_token);
+      if (pendingBooking) {
+        alert("Konto utworzone. Uzupełnij dane kartoteki, aby dokończyć rezerwację.");
+      }
+      navigate('/onboarding');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Nie udało się utworzyć konta.');
+    } finally {
+      setLoading(false);
     }
-    navigate('/dashboard'); 
   };
 
   return (
@@ -199,12 +250,20 @@ export const Register: React.FC = () => {
             </div>
           </div>
 
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg p-3 text-center">
+              {error}
+            </div>
+          )}
+
           <div>
             <button
               type="submit"
+              disabled={loading}
               className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors shadow-lg hover:shadow-xl"
             >
-              {pendingBooking ? 'Zarejestruj i potwierdź wizytę' : 'Zarejestruj się'} <ArrowRight className="ml-2" size={20} />
+              {loading ? 'Tworzę konto...' : (pendingBooking ? 'Zarejestruj i potwierdź wizytę' : 'Zarejestruj się')}
+              {!loading && <ArrowRight className="ml-2" size={20} />}
             </button>
           </div>
           

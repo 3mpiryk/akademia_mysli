@@ -15,6 +15,9 @@ View your app in AI Studio: https://ai.studio/apps/drive/1Ud3_2NQl-XCxN6I1bakSqG
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+2. Skonfiguruj backend:
+   - Ustaw `OPENAI_API_KEY` w swoim środowisku (np. `.env` dla backendu).
+   - Uruchom API: `uvicorn app.main:app --reload --host 0.0.0.0 --port 8001`
+3. Uruchom frontend:
+   - (opcjonalnie) ustaw `VITE_API_BASE_URL=http://localhost:8001` w `.env.local`
+   - `npm run dev`

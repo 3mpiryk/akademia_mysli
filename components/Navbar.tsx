@@ -39,9 +39,6 @@ export const Navbar: React.FC = () => {
                 {user.role === UserRole.PATIENT && (
                   <Link to="/dashboard" className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/dashboard')}`}>Panel Pacjenta</Link>
                 )}
-                {user.role === UserRole.DOCTOR && (
-                  <Link to="/doctor-panel" className="text-red-600 hover:text-red-800 px-3 py-2 rounded-md text-sm font-medium font-bold">Centrum Lekarza</Link>
-                )}
                 <div className="flex items-center gap-4 ml-4">
                   <span className="text-sm text-gray-500 flex items-center gap-1"><User size={16}/> {user.name}</span>
                   <button onClick={handleLogout} className="text-gray-500 hover:text-gray-700">
@@ -73,8 +70,8 @@ export const Navbar: React.FC = () => {
             <Link to="/services" className="block text-gray-700 hover:bg-gray-100 px-3 py-2 rounded-md text-base font-medium">Usługi i Cennik</Link>
             {user ? (
                <>
-                 <Link to={user.role === UserRole.DOCTOR ? "/doctor-panel" : "/dashboard"} className="block text-gray-700 hover:bg-gray-100 px-3 py-2 rounded-md text-base font-medium">
-                   {user.role === UserRole.DOCTOR ? "Centrum Lekarza" : "Panel Pacjenta"}
+                 <Link to="/dashboard" className="block text-gray-700 hover:bg-gray-100 px-3 py-2 rounded-md text-base font-medium">
+                   Panel Pacjenta
                  </Link>
                  <button onClick={handleLogout} className="w-full text-left block text-red-600 hover:bg-red-50 px-3 py-2 rounded-md text-base font-medium">Wyloguj</button>
                </>

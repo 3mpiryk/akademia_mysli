@@ -9,8 +9,12 @@ export const DoctorPanel: React.FC = () => {
   const { user, appointments, getDoctorStats, createBill, services } = useApp();
   const [activeTab, setActiveTab] = useState<'schedule' | 'stats'>('schedule');
 
-  if (!user || user.role !== UserRole.DOCTOR) {
-    return <Navigate to="/" replace />;
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.role !== UserRole.DOCTOR) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   const myAppointments = appointments

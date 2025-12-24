@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Bot } from 'lucide-react';
-import { sendMessageToGemini } from '../services/geminiService';
+import OpenAIService from '../services/openaiService';
 import { ChatMessage } from '../types';
 
 export const Chatbot: React.FC = () => {
@@ -34,10 +34,14 @@ export const Chatbot: React.FC = () => {
     setInput('');
     setIsLoading(true);
 
-    // Prepare history strings
-    const history = messages.map(m => `${m.role === 'user' ? 'User' : 'Model'}: ${m.text}`);
-    
-    const responseText = await sendMessageToGemini(history, userMsg.text);
+    let responseText = '';
+    try {
+      responseText = await OpenAIService.sendPublicChat(messages, userMsg.text);
+    } catch (error) {
+      responseText = error instanceof Error
+        ? error.message
+        : 'Wystąpił problem z połączeniem z asystentem. Spróbuj ponownie.';
+    }
 
     const botMsg: ChatMessage = {
       id: (Date.now() + 1).toString(),

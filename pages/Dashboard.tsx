@@ -7,8 +7,13 @@ import { AppointmentStatus, UserRole } from '../types';
 export const Dashboard: React.FC = () => {
   const { user, appointments, bills, prescriptions, services, doctors } = useApp();
 
-  if (!user || user.role !== UserRole.PATIENT) {
+  if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (user.role !== UserRole.PATIENT) {
+    const redirectPath = user.role === UserRole.DOCTOR ? '/akademia-mysli-panel-lekarza' : '/';
+    return <Navigate to={redirectPath} replace />;
   }
 
   const myAppointments = appointments
