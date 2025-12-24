@@ -15,7 +15,7 @@ import { PatientOnboarding } from './pages/PatientOnboarding';
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const location = useLocation();
     // Don't show chatbot on login/register/doctor pages to keep clean
-    const showChat = !['/login', '/register', '/onboarding', '/doctor-panel', '/akademia-mysli-panel-lekarza', '/panel-administratora'].includes(location.pathname);
+    const showChat = !['/login', '/register', '/onboarding', '/doctor-panel', '/akademia-mysli-panel-lekarza', '/panel-administratora', '/lekarz', '/admin'].includes(location.pathname);
     
     return (
         <>
@@ -39,9 +39,11 @@ const App: React.FC = () => {
               <Route path="/onboarding" element={<PatientOnboarding />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/booking" element={<Booking />} />
-              <Route path="/doctor-panel" element={<Navigate to="/akademia-mysli-panel-lekarza" replace />} />
-              <Route path="/akademia-mysli-panel-lekarza" element={<PatientRecord />} />
-              <Route path="/panel-administratora" element={<AdminPanel />} />
+              <Route path="/doctor-panel" element={<Navigate to="/lekarz" replace />} />
+              <Route path="/akademia-mysli-panel-lekarza" element={<Navigate to="/lekarz" replace />} />
+              <Route path="/panel-administratora" element={<Navigate to="/admin" replace />} />
+              <Route path="/lekarz" element={<PatientRecord />} />
+              <Route path="/admin" element={<AdminPanel />} />
             </Routes>
         </Layout>
       </BrowserRouter>

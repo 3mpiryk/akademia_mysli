@@ -12,7 +12,7 @@ export const Dashboard: React.FC = () => {
   }
 
   if (user.role !== UserRole.PATIENT) {
-    const redirectPath = user.role === UserRole.DOCTOR ? '/akademia-mysli-panel-lekarza' : '/';
+    const redirectPath = user.role === UserRole.DOCTOR ? '/lekarz' : '/';
     return <Navigate to={redirectPath} replace />;
   }
 

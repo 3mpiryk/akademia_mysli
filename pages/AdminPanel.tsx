@@ -450,7 +450,7 @@ export const AdminPanel: React.FC = () => {
   };
 
   const openRecord = (recordCode: string) => {
-    navigate(`/akademia-mysli-panel-lekarza?record=${encodeURIComponent(recordCode)}`);
+    navigate(`/lekarz?record=${encodeURIComponent(recordCode)}`);
   };
 
   const copyToClipboard = async (text: string, setNotice: (value: string) => void) => {

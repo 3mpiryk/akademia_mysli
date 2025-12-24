@@ -6,7 +6,7 @@ import { Mail, Lock, User as UserIcon, ArrowRight } from 'lucide-react';
 
 const getDefaultRoute = (role: UserRole) => {
   if (role === UserRole.PATIENT) return '/dashboard';
-  return '/akademia-mysli-panel-lekarza';
+  return '/lekarz';
 };
 
 type RegisterResponse = {

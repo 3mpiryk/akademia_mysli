@@ -16,7 +16,7 @@ export const Booking: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   if (user && user.role !== UserRole.PATIENT) {
-    const redirectPath = user.role === UserRole.DOCTOR ? '/akademia-mysli-panel-lekarza' : '/';
+    const redirectPath = user.role === UserRole.DOCTOR ? '/lekarz' : '/';
     return <Navigate to={redirectPath} replace />;
   }
 
